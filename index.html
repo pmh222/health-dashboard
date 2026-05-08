@@ -51,6 +51,23 @@
         src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"
     ></script>
 
+    <!-- Supabase -->
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/+esm"
+        type="module"
+    ></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/+esm"
+      }
+    }
+    </script>
+    <script type="module">
+      import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/+esm';
+      window.supabase = { createClient };
+    </script>
+
     <style>
         /* Reset & Base */
         *,
