@@ -1,65 +1,147 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-<meta name="apple-mobile-web-app-title" content="Health Stack"/>
-<meta name="theme-color" content="#f5f4f1"/>
-<title>Health Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-<style>
-/* Reset & Base */
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+    <!-- Basis -->
+    <meta charset="UTF-8" />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
 
-body {
-    background: #f5f4f1; /* Warmes Off-White */
-    color: #1c1917;      /* Tiefes Stein-Grau für Text */
-    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    overscroll-behavior: none;
-    -webkit-font-smoothing: antialiased;
-}
+    <!-- iOS / PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="default"
+    />
+    <meta name="apple-mobile-web-app-title" content="Health Stack" />
 
-input, select, button {
-    font-family: inherit;
-    font-size: 1rem;
-}
+    <!-- Theme -->
+    <meta name="theme-color" content="#f5f4f1" />
 
-/* Form-Elemente Anpassung */
-input[type=number]::-webkit-inner-spin-button {
-    opacity: 1;
-}
+    <!-- SEO -->
+    <meta
+        name="description"
+        content="Modernes Health Dashboard zur Übersicht deiner Gesundheitsdaten."
+    />
 
-input[type=range] {
-    width: 100%;
-    accent-color: #5b7c99; /* Dezentes Stahlblau */
-}
+    <title>Health Dashboard</title>
 
-/* Subtile Scrollbar */
-::-webkit-scrollbar {
-    width: 4px;
-}
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    />
 
-::-webkit-scrollbar-thumb {
-    background: #d6d3cd; /* Passendes Beige-Grau */
-    border-radius: 4px;
-}
+    <!-- React -->
+    <script
+        crossorigin
+        src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"
+    ></script>
 
-/* Animationen */
-@keyframes spin { to { transform: rotate(360deg); } }
-.spin { animation: spin 1s linear infinite; }
+    <script
+        crossorigin
+        src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"
+    ></script>
 
-/* Optionale UI-Klasse für Karten-Elemente */
-.card {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0,0,0,0.03);
-}
-</style>
+    <!-- Babel (nur für Development sinnvoll) -->
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"
+    ></script>
+
+    <style>
+        /* Reset & Base */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg: #f5f4f1;
+            --text: #1c1917;
+            --card: #ffffff;
+            --accent: #5b7c99;
+            --border: rgba(0, 0, 0, 0.05);
+            --scrollbar: #d6d3cd;
+        }
+
+        html {
+            -webkit-text-size-adjust: 100%;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Inter", -apple-system, BlinkMacSystemFont,
+                "Segoe UI", sans-serif;
+            overscroll-behavior: none;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        input,
+        select,
+        button,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            opacity: 1;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar);
+            border-radius: 999px;
+        }
+
+        /* Animationen */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+
+        /* UI Card */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow:
+                0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
 </head>
 <body>
 <div id="root"></div>
