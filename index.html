@@ -197,7 +197,13 @@ const CAT_COLOR={medikament:"#8c94c8",basis:"#7ca8b8",performance:"#c4a176"};
 const PRIO={fehlend:0,labor:1,optimieren:2,aktiv:3,optional:4,pausiert:5};
 const BP_CTX=["Ruhe","Nach Training","Morgens nüchtern","Abends","Arztbesuch","Stress"];
 const SQ=["Sehr gut","Gut","Mittel","Schlecht","Sehr schlecht"];
-const SQC={"Sehr gut":"#4ade80","Gut":"#86efac","Mittel":"#fbbf24","Schlecht":"#fb923c","Sehr schlecht":"#f87171"};
+const SQC={
+  "Sehr gut":"#76a889",
+  "Gut":"#93b8a1",
+  "Mittel":"#d2b06b",
+  "Schlecht":"#d19a72",
+  "Sehr schlecht":"#c68b8b"
+};
 
 function nowBerlin(){const p={};new Intl.DateTimeFormat("sv-SE",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).formatToParts(new Date()).forEach(({type,value})=>p[type]=value);return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;}
 function todayBerlin(){const p={};new Intl.DateTimeFormat("sv-SE",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date()).forEach(({type,value})=>p[type]=value);return `${p.year}-${p.month}-${p.day}`;}
