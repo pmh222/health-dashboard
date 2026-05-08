@@ -6,80 +6,65 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="Health Stack"/>
-<meta name="theme-color" content="#f8fafc"/>
+<meta name="theme-color" content="#f5f4f1"/>
 <title>Health Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <style>
-* {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    margin: 0;
-    padding: 0;
-}
+/* Reset & Base */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
 
 body {
-    /* Ein sehr helles, warmes Grau für den Hintergrund */
-    background: #f8fafc; 
-    /* Ein weiches Anthrazit statt hartem Schwarz für bessere Lesbarkeit */
-    color: #334155; 
+    background: #f5f4f1; /* Warmes Off-White */
+    color: #1c1917;      /* Tiefes Stein-Grau für Text */
     font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     overscroll-behavior: none;
-    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
 }
 
 input, select, button {
     font-family: inherit;
-    /* Eingabefelder erhalten einen weichen Rahmen */
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 8px;
+    font-size: 1rem;
 }
 
+/* Form-Elemente Anpassung */
 input[type=number]::-webkit-inner-spin-button {
     opacity: 1;
 }
 
 input[type=range] {
     width: 100%;
-    /* Ein freundliches Indigo-Blau als Akzent */
-    accent-color: #6366f1;
+    accent-color: #5b7c99; /* Dezentes Stahlblau */
 }
 
-/* Scrollbar dezent und hell halten */
+/* Subtile Scrollbar */
 ::-webkit-scrollbar {
-    width: 5px;
+    width: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 10px;
+    background: #d6d3cd; /* Passendes Beige-Grau */
+    border-radius: 4px;
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
+/* Animationen */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; }
 
-.spin {
-    animation: spin 1s linear infinite;
-}
-
-/* Hilfsklasse für Karten-Design (optional, falls du UI-Elemente baust) */
+/* Optionale UI-Klasse für Karten-Elemente */
 .card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    padding: 16px;
-    border: 1px solid #f1f5f9;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0,0,0,0.03);
 }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const {useState,useEffect,useRef} = React;
+const { useState, useEffect, useRef } = React;
 
 const SUPA_URL='https://odezuxrgelibfvcsjrjs.supabase.co';
 const SUPA_KEY='sb_publishable_YyTILaXGKqkbLr4mQQ5S5g_k6E4bJ1Z';
