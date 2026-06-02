@@ -223,7 +223,7 @@ const fmtT=iso=>new Date(iso).toLocaleTimeString("de-DE",{timeZone:TZ,hour:"2-di
 const fmtDur=m=>`${Math.floor(m/60)}h${m%60>0?" "+m%60+"m":""}`;
 function clBP(s,d){if(s<120&&d<80)return{label:"Optimal",color:"#15803d"};if(s<130&&d<85)return{label:"Normal",color:"#16a34a"};if(s<140&&d<90)return{label:"Hochnormal",color:"#ca8a04"};if(s<160&&d<100)return{label:"Grad 1",color:"#ea580c"};return{label:"Grad 2+",color:"#dc2626"};}
 
-function Chart({data,lines,refs=[],empty="Noch keine Einträge.",h=170}){
+function Chart({data,lines,refs=[],zone=null,empty="Noch keine Einträge.",h=170}){
   const W=360,PL=38,PR=16,PT=14,PB=26,cW=W-PL-PR,cH=h-PT-PB;
   const vals=data.flatMap(d=>lines.map(l=>d[l.k]).filter(v=>v!=null&&!isNaN(v)));
   if(data.length<2||!vals.length)return(<div style={{height:h,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,color:"#9aa8a0",fontSize:12,padding:"0 20px",textAlign:"center"}}><span style={{fontSize:24,opacity:.25}}>📈</span>{data.length===1?"Noch eine Messung für den Verlauf.":empty}</div>);
@@ -232,7 +232,7 @@ function Chart({data,lines,refs=[],empty="Noch keine Einträge.",h=170}){
   const path=pts=>pts.filter(Boolean).map(([x,y],i)=>`${i?"L":"M"}${x},${y}`).join(" ");
   const tks=[mn,Math.round((mn+mx)/2),mx];
   const xi=[0,Math.floor((data.length-1)/2),data.length-1].filter((v,i,a)=>a.indexOf(v)===i);
-  return(<svg viewBox={`0 0 ${W} ${h}`} style={{width:"100%",height:h,overflow:"visible"}}>{tks.map(v=>(<g key={v}><line x1={PL} x2={PL+cW} y1={ty(v)} y2={ty(v)} stroke="#e4eae6" strokeWidth={1}/><text x={PL-5} y={ty(v)+4} textAnchor="end" fontSize={9} fill="#9aa8a0">{Math.round(v)}</text></g>))}{refs.filter(r=>r.y>=mn&&r.y<=mx).map(r=>(<g key={r.y}><line x1={PL} x2={PL+cW} y1={ty(r.y)} y2={ty(r.y)} stroke={r.c} strokeWidth={1} strokeDasharray="5,3" opacity={.55}/><text x={PL+cW+2} y={ty(r.y)+4} fontSize={8} fill={r.c} opacity={.7}>{r.y}</text></g>))}{lines.map(l=>{const pts=data.map((d,i)=>d[l.k]!=null?[tx(i),ty(d[l.k])]:null);if(pts.filter(Boolean).length<2)return null;return(<g key={l.k}><path d={path(pts)} fill="none" stroke={l.c} strokeWidth={l.w||2.5} strokeDasharray={l.d||"none"}/>{data.map((d,i)=>d[l.k]!=null?<circle key={i} cx={tx(i)} cy={ty(d[l.k])} r={3.5} fill={l.c}/>:null)}</g>);})}{xi.map(i=><text key={i} x={tx(i)} y={h-4} textAnchor="middle" fontSize={9} fill="#9aa8a0">{data[i].lb}</text>)}</svg>);
+  return(<svg viewBox={`0 0 ${W} ${h}`} style={{width:"100%",height:h,overflow:"visible"}}>{zone&&zone.lo<=mx&&zone.hi>=mn&&(()=>{const yTop=ty(Math.min(zone.hi,mx)),yBot=ty(Math.max(zone.lo,mn));return(<rect x={PL} y={yTop} width={cW} height={Math.max(0,yBot-yTop)} fill="#15803d" opacity={0.08}/>);})()}{tks.map(v=>(<g key={v}><line x1={PL} x2={PL+cW} y1={ty(v)} y2={ty(v)} stroke="#e4eae6" strokeWidth={1}/><text x={PL-5} y={ty(v)+4} textAnchor="end" fontSize={9} fill="#9aa8a0">{Math.round(v)}</text></g>))}{refs.filter(r=>r.y>=mn&&r.y<=mx).map(r=>(<g key={r.y}><line x1={PL} x2={PL+cW} y1={ty(r.y)} y2={ty(r.y)} stroke={r.c} strokeWidth={1} strokeDasharray="5,3" opacity={.55}/><text x={PL+cW+2} y={ty(r.y)+4} fontSize={8} fill={r.c} opacity={.7}>{r.y}</text></g>))}{lines.map(l=>{const pts=data.map((d,i)=>d[l.k]!=null?[tx(i),ty(d[l.k])]:null);if(pts.filter(Boolean).length<2)return null;return(<g key={l.k}><path d={path(pts)} fill="none" stroke={l.c} strokeWidth={l.w||2.5} strokeDasharray={l.d||"none"}/>{data.map((d,i)=>d[l.k]!=null?<circle key={i} cx={tx(i)} cy={ty(d[l.k])} r={3.5} fill={l.c}/>:null)}</g>);})}{xi.map(i=><text key={i} x={tx(i)} y={h-4} textAnchor="middle" fontSize={9} fill="#9aa8a0">{data[i].lb}</text>)}</svg>);
 }
 
 function PhaseBar({deep=0,rem=0,light=0,awake=0}){
@@ -292,7 +292,7 @@ function AuthScreen(){
 function App(){
   const [session,setSession]=useState(undefined);
   const [dataLoading,setDataLoading]=useState(false);
-  const [tab,setTab]=useState("bp");
+  const [tab,setTab]=useState("sleep");
   const [supps,setSupps]=useState([]);
   const [bpLog,setBpLog]=useState([]);
   const [slLog,setSlLog]=useState([]);
@@ -302,6 +302,7 @@ function App(){
   const [saving,setSaving]=useState(false);
   const [bpR,setBpR]=useState("30d"), [slR,setSlR]=useState("30d"), [sfilt,setSfilt]=useState("all");
   const [bpF,setBpF]=useState({sys:"",dia:"",pulse:"",ctx:"Ruhe",note:"",dt:nowBerlin()});
+  const [bpDetails,setBpDetails]=useState(false);
   const [slF,setSlF]=useState({date:todayBerlin(),dur:480,qual:"Gut",hrv:"",rhr:"",deep:0,rem:0,light:0,awake:0,bb:"",note:""});
   const [sF,setSF]=useState({name:"",dose:"",timing:"",category:"basis",status:"aktiv",note:""});
 
@@ -342,11 +343,15 @@ function App(){
   const addBP=async()=>{
     const s=parseInt(bpF.sys),d=parseInt(bpF.dia);
     if(!s||!d||s<60||s>260||d<40||d>160){toast_("Ungültige Werte","warn");return;}
+    if(d>=s){toast_("Diastolisch ≥ systolisch – bitte prüfen","warn");return;}
+    if(s-d<20){toast_("Sys/Dia ungewöhnlich nah – bitte prüfen","warn");return;}
     setSaving(true);
     const entry={id:Date.now(),user_id:session.user.id,sys:s,dia:d,pulse:parseInt(bpF.pulse)||null,ctx:bpF.ctx,note:bpF.note.trim(),ts:bpF.dt?new Date(bpF.dt).toISOString():new Date().toISOString()};
+    // Optimistic: lokal sofort einfügen
+    setBpLog(l=>[entry,...l].sort((a,b)=>new Date(b.ts)-new Date(a.ts)));
     const{error}=await sb.from('bp_log').insert(entry);
-    if(!error){setBpLog(l=>[entry,...l].sort((a,b)=>new Date(b.ts)-new Date(a.ts)));setBpF({sys:"",dia:"",pulse:"",ctx:"Ruhe",note:"",dt:nowBerlin()});setModal(null);toast_("Gespeichert!");}
-    else toast_("Fehler: "+error.message,"warn");
+    if(!error){setBpF({sys:"",dia:"",pulse:"",ctx:"Ruhe",note:"",dt:nowBerlin()});setModal(null);toast_("Gespeichert!");}
+    else{setBpLog(l=>l.filter(x=>x.id!==entry.id));toast_("Fehler: "+error.message,"warn");} // Rollback
     setSaving(false);
   };
   const delBP=async id=>{const{error}=await sb.from('bp_log').delete().eq('id',id);if(!error)setBpLog(l=>l.filter(x=>x.id!==id));toast_("Gelöscht","warn");};
@@ -355,9 +360,10 @@ function App(){
     if(!slF.date){toast_("Datum fehlt","warn");return;}
     setSaving(true);
     const entry={id:Date.now(),user_id:session.user.id,date:slF.date,dur:parseInt(slF.dur)||480,qual:slF.qual,hrv:parseFloat(slF.hrv)||null,rhr:parseInt(slF.rhr)||null,deep:parseInt(slF.deep)||0,rem:parseInt(slF.rem)||0,light:parseInt(slF.light)||0,awake:parseInt(slF.awake)||0,bb:parseInt(slF.bb)||null,note:slF.note.trim()};
+    setSlLog(l=>[entry,...l].sort((a,b)=>new Date(b.date)-new Date(a.date)));
     const{error}=await sb.from('sleep_log').insert(entry);
-    if(!error){setSlLog(l=>[entry,...l].sort((a,b)=>new Date(b.date)-new Date(a.date)));setSlF({date:todayBerlin(),dur:480,qual:"Gut",hrv:"",rhr:"",deep:0,rem:0,light:0,awake:0,bb:"",note:""});setModal(null);toast_("Gespeichert!");}
-    else toast_("Fehler: "+error.message,"warn");
+    if(!error){setSlF({date:todayBerlin(),dur:480,qual:"Gut",hrv:"",rhr:"",deep:0,rem:0,light:0,awake:0,bb:"",note:""});setModal(null);toast_("Gespeichert!");}
+    else{setSlLog(l=>l.filter(x=>x.id!==entry.id));toast_("Fehler: "+error.message,"warn");}
     setSaving(false);
   };
   const delSl=async id=>{const{error}=await sb.from('sleep_log').delete().eq('id',id);if(!error)setSlLog(l=>l.filter(x=>x.id!==id));toast_("Gelöscht","warn");};
@@ -382,10 +388,33 @@ function App(){
 
   const exportData=()=>{const blob=new Blob([JSON.stringify({version:"3.0",exported:new Date().toISOString(),supps,bpLog,sleepLog:slLog},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`health-${todayBerlin()}.json`;a.click();URL.revokeObjectURL(url);};
 
+  const bpReport=()=>{
+    const slot=ts=>{const h=+new Intl.DateTimeFormat("de-DE",{timeZone:TZ,hour:"2-digit",hour12:false}).format(new Date(ts));return h<12?"morgens":"abends";};
+    const cut=new Date(Date.now()-7*864e5);
+    const rows=bpLog.filter(x=>new Date(x.ts)>=cut).sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+    const avg=arr=>arr.length?`${Math.round(arr.reduce((a,x)=>a+x.sys,0)/arr.length)}/${Math.round(arr.reduce((a,x)=>a+x.dia,0)/arr.length)} mmHg`:"–";
+    const m=rows.filter(x=>slot(x.ts)==="morgens"),e=rows.filter(x=>slot(x.ts)==="abends");
+    const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+    const tr=rows.map(x=>`<tr><td>${esc(fmtD(x.ts))}</td><td>${esc(fmtT(x.ts))}</td><td>${slot(x.ts)==="morgens"?"🌅 morgens":"🌙 abends"}</td><td style="font-weight:700">${x.sys}/${x.dia}</td><td>${x.pulse||"–"}</td><td>${esc(clBP(x.sys,x.dia).label)}</td><td>${esc(x.ctx||"")}</td></tr>`).join("");
+    const html=`<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>Blutdruck-Wochenreport</title><style>body{font-family:-apple-system,Segoe UI,sans-serif;color:#14342a;max-width:720px;margin:30px auto;padding:0 20px}h1{font-size:20px}h2{font-size:14px;color:#5c6b63;margin-top:24px}.sum{display:flex;gap:14px;margin:16px 0}.box{flex:1;border:1px solid #d4ddd7;border-radius:10px;padding:12px}.box .l{font-size:11px;color:#5c6b63}.box .v{font-size:20px;font-weight:800}table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #eee}th{color:#5c6b63;font-size:11px;text-transform:uppercase}.foot{margin-top:24px;font-size:11px;color:#9aa8a0}@media print{body{margin:0}}</style></head><body><h1>Blutdruck-Wochenreport</h1><div style="font-size:12px;color:#5c6b63">Zeitraum: letzte 7 Tage · erstellt ${esc(fmtD(new Date().toISOString()))} · ${rows.length} Messungen</div><div class="sum"><div class="box"><div class="l">Ø Gesamt</div><div class="v">${avg(rows)}</div></div><div class="box"><div class="l">Ø Morgens</div><div class="v">${avg(m)}</div></div><div class="box"><div class="l">Ø Abends</div><div class="v">${avg(e)}</div></div></div><h2>Einzelmessungen</h2><table><thead><tr><th>Datum</th><th>Zeit</th><th>Slot</th><th>RR</th><th>Puls</th><th>Klasse</th><th>Kontext</th></tr></thead><tbody>${tr||'<tr><td colspan="7" style="color:#9aa8a0;padding:16px">Keine Messungen in den letzten 7 Tagen.</td></tr>'}</tbody></table><div class="foot">Heimmessung, nicht ärztlich validiert. Mittelwerte ohne ersten Tag können klinisch aussagekräftiger sein. Zur Besprechung mit der behandelnden Ärztin / dem behandelnden Arzt.</div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+    const w=window.open("","_blank");
+    if(w){w.document.write(html);w.document.close();}else{toast_("Pop-up blockiert – bitte erlauben","warn");}
+  };
+
   const bpCut=bpR==="all"?null:new Date(Date.now()-(bpR==="7d"?7:bpR==="30d"?30:90)*864e5);
   const bpFilt=bpCut?bpLog.filter(x=>new Date(x.ts)>=bpCut):[...bpLog];
-  const bpChart=[...bpFilt].sort((a,b)=>new Date(a.ts)-new Date(b.ts)).map(x=>({sys:x.sys,dia:x.dia,pulse:x.pulse,lb:fmtD(x.ts)}));
+  // Morgen/Abend aus der Uhrzeit ableiten (< 12 Uhr Berlin = morgens)
+  const bpSlot=ts=>{const h=+new Intl.DateTimeFormat("de-DE",{timeZone:TZ,hour:"2-digit",hour12:false}).format(new Date(ts));return h<12?"morgens":"abends";};
+  const bpChart=[...bpFilt].sort((a,b)=>new Date(a.ts)-new Date(b.ts)).map(x=>({sys:x.sys,dia:x.dia,pulse:x.pulse,lb:fmtD(x.ts),slot:bpSlot(x.ts)}));
   const bpAvg=bpFilt.length?{sys:Math.round(bpFilt.reduce((a,x)=>a+x.sys,0)/bpFilt.length),dia:Math.round(bpFilt.reduce((a,x)=>a+x.dia,0)/bpFilt.length)}:null;
+  // Rollender 7-Tage-Mittelwert (Kernmetrik bei Hypertonie)
+  const bp7Cut=new Date(Date.now()-7*864e5);
+  const bp7=bpLog.filter(x=>new Date(x.ts)>=bp7Cut);
+  const bp7Avg=bp7.length?{sys:Math.round(bp7.reduce((a,x)=>a+x.sys,0)/bp7.length),dia:Math.round(bp7.reduce((a,x)=>a+x.dia,0)/bp7.length),n:bp7.length}:null;
+  // Morgen/Abend-Mittel der letzten 7 Tage
+  const bp7m=bp7.filter(x=>bpSlot(x.ts)==="morgens"), bp7e=bp7.filter(x=>bpSlot(x.ts)==="abends");
+  const avgPair=arr=>arr.length?{sys:Math.round(arr.reduce((a,x)=>a+x.sys,0)/arr.length),dia:Math.round(arr.reduce((a,x)=>a+x.dia,0)/arr.length)}:null;
+  const bp7mAvg=avgPair(bp7m), bp7eAvg=avgPair(bp7e);
   const slCut=slR==="all"?null:new Date(Date.now()-(slR==="7d"?7:slR==="30d"?30:90)*864e5);
   const slFilt=slCut?slLog.filter(x=>new Date(x.date)>=slCut):[...slLog];
   const slChart=[...slFilt].sort((a,b)=>new Date(a.date)-new Date(b.date)).map(x=>({dur:parseFloat((x.dur/60).toFixed(1)),hrv:x.hrv,rhr:x.rhr,bb:x.bb,lb:fmtD(x.date+"T12:00")}));
@@ -457,15 +486,32 @@ function App(){
         </>}
 
         {tab==="bp"&&<>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+            <div style={{background:"#1a3c2e",borderRadius:14,padding:"12px 14px"}}>
+              <div style={{fontSize:9,color:"#a9c4b5",letterSpacing:1,marginBottom:3}}>Ø 7 TAGE (mmHg)</div>
+              <div style={{fontSize:24,fontWeight:800,color:"#ffffff",letterSpacing:-1,lineHeight:1}}>{bp7Avg?`${bp7Avg.sys}/${bp7Avg.dia}`:"–"}</div>
+              <div style={{fontSize:10,color:"#a9c4b5",marginTop:4}}>{bp7Avg?`${bp7Avg.n} Messung${bp7Avg.n===1?"":"en"} · ${clBP(bp7Avg.sys,bp7Avg.dia).label}`:"noch keine Messung"}</div>
+            </div>
+            <div style={{display:"grid",gridTemplateRows:"1fr 1fr",gap:8}}>
+              <div style={{background:"#ffffff",border:"1px solid var(--border)",borderRadius:12,padding:"7px 11px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:11,color:"#7d8a82"}}>🌅 Morgens</span>
+                <span style={{fontSize:14,fontWeight:800,color:bp7mAvg?clBP(bp7mAvg.sys,bp7mAvg.dia).color:"#9aa8a0"}}>{bp7mAvg?`${bp7mAvg.sys}/${bp7mAvg.dia}`:"–"}</span>
+              </div>
+              <div style={{background:"#ffffff",border:"1px solid var(--border)",borderRadius:12,padding:"7px 11px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:11,color:"#7d8a82"}}>🌙 Abends</span>
+                <span style={{fontSize:14,fontWeight:800,color:bp7eAvg?clBP(bp7eAvg.sys,bp7eAvg.dia).color:"#9aa8a0"}}>{bp7eAvg?`${bp7eAvg.sys}/${bp7eAvg.dia}`:"–"}</span>
+              </div>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
             <StatCard label="LETZTE" val={bpLog[0]?`${bpLog[0].sys}/${bpLog[0].dia}`:"–"} sub={bpLog[0]?clBP(bpLog[0].sys,bpLog[0].dia).label:""} color={bpLog[0]?clBP(bpLog[0].sys,bpLog[0].dia).color:"#7d8a82"}/>
-            <StatCard label="Ø SCHNITT" val={bpAvg?`${bpAvg.sys}/${bpAvg.dia}`:"–"} sub={`${bpFilt.length} Messungen`} color={bpAvg?clBP(bpAvg.sys,bpAvg.dia).color:"#7d8a82"}/>
-            <StatCard label="GESAMT" val={bpLog.length} sub="Einträge" color="#1a3c2e"/>
+            <StatCard label={`Ø ${bpR==="7d"?"7T":bpR==="30d"?"30T":bpR==="90d"?"3M":"GESAMT"}`} val={bpAvg?`${bpAvg.sys}/${bpAvg.dia}`:"–"} sub={`${bpFilt.length} Messungen`} color={bpAvg?clBP(bpAvg.sys,bpAvg.dia).color:"#7d8a82"}/>
           </div>
           <RangeFilter val={bpR} set={setBpR}/>
-          <ChartBox title="Verlauf (mmHg)" legend={[{c:"#f87171",l:"Sys"},{c:"#60a5fa",l:"Dia"},{c:"#a78bfa",l:"Puls"}]}>
-            <Chart data={bpChart} lines={[{k:"sys",c:"#f87171"},{k:"dia",c:"#60a5fa"},{k:"pulse",c:"#a78bfa",d:"5,3",w:1.5}]} refs={[{y:120,c:"#4ade80"},{y:90,c:"#fbbf24"},{y:140,c:"#f87171"}]} empty="Erste Messung eintragen." h={180}/>
+          <ChartBox title="Verlauf (mmHg) · grün = Zielzone" legend={[{c:"#f87171",l:"Sys"},{c:"#60a5fa",l:"Dia"},{c:"#a78bfa",l:"Puls"}]}>
+            <Chart data={bpChart} lines={[{k:"sys",c:"#f87171"},{k:"dia",c:"#60a5fa"},{k:"pulse",c:"#a78bfa",d:"5,3",w:1.5}]} refs={[{y:120,c:"#16a34a"},{y:90,c:"#ca8a04"},{y:140,c:"#dc2626"}]} zone={{lo:90,hi:135}} empty="Erste Messung eintragen." h={180}/>
           </ChartBox>
+          <button onClick={bpReport} style={{width:"100%",background:"transparent",border:"1px solid #cfd8d2",borderRadius:12,color:"#1a3c2e",padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>🖨 Wochenreport für Arzt</button>
           {bpLog.length===0?<div style={{textAlign:"center",padding:"30px 0",color:"#9aa8a0",fontSize:13}}>Tippe auf + und trage deine erste Messung ein!</div>:
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             <div style={{fontSize:10,color:"#7d8a82",letterSpacing:2,textTransform:"uppercase",marginBottom:2}}>Einträge</div>
@@ -479,7 +525,7 @@ function App(){
                     {e.pulse&&<span style={{fontSize:10,color:"#a78bfa"}}>♥ {e.pulse}</span>}
                     <span style={{fontSize:10,color:"#9aa8a0"}}>{e.ctx}</span>
                   </div>
-                  <div style={{fontSize:10,color:"#9aa8a0",marginTop:2}}>{fmtD(e.ts)} · {fmtT(e.ts)}{e.note&&<span style={{marginLeft:6,color:"#7d8a82"}}>· {e.note}</span>}</div>
+                  <div style={{fontSize:10,color:"#9aa8a0",marginTop:2}}>{bpSlot(e.ts)==="morgens"?"🌅":"🌙"} {fmtD(e.ts)} · {fmtT(e.ts)}{e.note&&<span style={{marginLeft:6,color:"#7d8a82"}}>· {e.note}</span>}</div>
                 </div>
                 <button onClick={()=>delBP(e.id)} style={{background:"transparent",border:"1px solid #f0c4c4",color:"#dc2626",borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer",flexShrink:0}}>×</button>
               </div>
@@ -541,11 +587,17 @@ function App(){
       </Sheet>)}
 
       {modal==="bp"&&(<Sheet onClose={()=>setModal(null)} title="🩺 Blutdruck eintragen">
-        <div style={{display:"flex",gap:10,marginBottom:12}}>{[{l:"SYSTOLISCH *",k:"sys",ph:"138"},{l:"DIASTOLISCH *",k:"dia",ph:"75"},{l:"PULS",k:"pulse",ph:"44"}].map(({l,k,ph})=>(<div key={k} style={{flex:1}}><div style={{fontSize:10,color:"#5c6b63",marginBottom:4,letterSpacing:1}}>{l}</div><input style={INP} type="number" inputMode="numeric" placeholder={ph} value={bpF[k]} onChange={e=>setBpF(p=>({...p,[k]:e.target.value}))}/><div style={{fontSize:9,color:"#9aa8a0",marginTop:2}}>{k==="pulse"?"bpm":"mmHg"}</div></div>))}</div>
+        <div style={{display:"flex",gap:10,marginBottom:10}}>
+          {[{l:"SYSTOLISCH *",k:"sys",ph:"138"},{l:"DIASTOLISCH *",k:"dia",ph:"75"}].map(({l,k,ph})=>(<div key={k} style={{flex:1}}><div style={{fontSize:10,color:"#5c6b63",marginBottom:4,letterSpacing:1}}>{l}</div><input style={{...INP,fontSize:26,fontWeight:800,padding:"14px 13px",textAlign:"center"}} type="number" inputMode="numeric" placeholder={ph} value={bpF[k]} onChange={e=>setBpF(p=>({...p,[k]:e.target.value}))}/><div style={{fontSize:9,color:"#9aa8a0",marginTop:2,textAlign:"center"}}>mmHg</div></div>))}
+          <div style={{width:80}}><div style={{fontSize:10,color:"#5c6b63",marginBottom:4,letterSpacing:1}}>PULS</div><input style={{...INP,fontSize:18,padding:"14px 8px",textAlign:"center"}} type="number" inputMode="numeric" placeholder="44" value={bpF.pulse} onChange={e=>setBpF(p=>({...p,pulse:e.target.value}))}/><div style={{fontSize:9,color:"#9aa8a0",marginTop:2,textAlign:"center"}}>bpm</div></div>
+        </div>
         {bpF.sys&&bpF.dia&&(()=>{const s=+bpF.sys,d=+bpF.dia;if(!s||!d)return null;const cl=clBP(s,d);return(<div style={{background:"#ffffff",border:`1px solid ${cl.color}44`,borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,marginBottom:12}}><span style={{fontSize:22,fontWeight:900,color:cl.color}}>{s}/{d}</span><span style={{fontSize:12,color:cl.color,fontWeight:600}}>{cl.label}</span></div>);})()}
-        <F label="ZEITPUNKT (Berlin)"><input style={INP} type="datetime-local" value={bpF.dt} onChange={e=>setBpF(p=>({...p,dt:e.target.value}))}/></F>
-        <F label="KONTEXT"><select style={{...INP,cursor:"pointer"}} value={bpF.ctx} onChange={e=>setBpF(p=>({...p,ctx:e.target.value}))}>{BP_CTX.map(c=><option key={c}>{c}</option>)}</select></F>
-        <F label="NOTIZ"><input style={INP} placeholder="z.B. nach Kaffee..." value={bpF.note} onChange={e=>setBpF(p=>({...p,note:e.target.value}))}/></F>
+        <button onClick={()=>setBpDetails(v=>!v)} style={{background:"transparent",border:"none",color:"#5c6b63",fontSize:12,fontWeight:600,cursor:"pointer",padding:"4px 0",marginBottom:bpDetails?8:4,display:"flex",alignItems:"center",gap:5}}>{bpDetails?"▾":"▸"} Details {bpDetails?"ausblenden":"(Zeitpunkt, Kontext, Notiz)"}</button>
+        {bpDetails&&<>
+          <F label="ZEITPUNKT (Berlin)"><input style={INP} type="datetime-local" value={bpF.dt} onChange={e=>setBpF(p=>({...p,dt:e.target.value}))}/></F>
+          <F label="KONTEXT"><select style={{...INP,cursor:"pointer"}} value={bpF.ctx} onChange={e=>setBpF(p=>({...p,ctx:e.target.value}))}>{BP_CTX.map(c=><option key={c}>{c}</option>)}</select></F>
+          <F label="NOTIZ"><input style={INP} placeholder="z.B. nach Kaffee..." value={bpF.note} onChange={e=>setBpF(p=>({...p,note:e.target.value}))}/></F>
+        </>}
         <Btns onCancel={()=>setModal(null)} onSave={addBP} saving={saving}/>
       </Sheet>)}
 
