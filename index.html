@@ -169,6 +169,19 @@ const SUPA_URL='https://odezuxrgelibfvcsjrjs.supabase.co';
 const SUPA_KEY='sb_publishable_YyTILaXGKqkbLr4mQQ5S5g_k6E4bJ1Z';
 const sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
 
+// --- Keepalive: hält die Supabase-DB aktiv (verhindert Auto-Pause nach 7 Tagen) ---
+function keepalive(){
+  sb.from('supplements').select('id').limit(1)
+    .then(()=>{})            // Erfolg: nichts tun, Ping hat gereicht
+    .catch(()=>{});          // Fehler still schlucken (z.B. offline)
+}
+keepalive();                                   // beim Laden der App
+document.addEventListener('visibilitychange',()=>{   // beim Zurückwechseln zur App
+  if(document.visibilityState==='visible') keepalive();
+});
+
+
+
 const TZ="Europe/Berlin";
 const DEFAULT_SUPPS=[
   {name:"Candesartan",dose:"8 mg",timing:"Morgens",category:"medikament",status:"aktiv",note:"Blutdruck – ARB, sportkompatibel",custom:false},
